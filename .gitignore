@@ -1,2 +1,8 @@
 # secrets
 .env
+
+# data file
+jira_issues_raw.json
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
