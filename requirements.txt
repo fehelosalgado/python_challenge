@@ -1,1 +1,4 @@
-# bibliiotecas utilizadas
+# bibliiotecas utilizadas para conexão com o blob para baixar o arquivo json de dados do Jira
+python-dotenv
+azure-identity
+azure-storage-blob
