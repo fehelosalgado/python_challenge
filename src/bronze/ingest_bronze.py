@@ -47,5 +47,7 @@ def download_jira_data():
             
         print(f"Sucesso! Arquivo salvo em: {output_path}")
 
+        return blob_name
+
     except Exception as e:
         print(f"Erro na conexão ou download: {e}")
