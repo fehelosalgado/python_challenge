@@ -3,6 +3,7 @@
 
 # data file
 jira_issues_raw.json
+silver_issues.parquet
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
