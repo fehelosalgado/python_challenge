@@ -2,8 +2,11 @@
 .env
 
 # data file
-jira_issues_raw.json
+bronze_issues.json
 silver_issues.parquet
+gold_sla_issues.csv
+gold_sla_by_analyst.csv
+gold_sla_by_issue_type.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
