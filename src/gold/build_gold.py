@@ -31,24 +31,56 @@ def process_silver_to_gold(df_silver):
     df_gold['is_sla_met'] = df_gold.apply(
         lambda row: verify_sla_status(row['resolution_hours'], row['sla_expected_hours']), axis=1
     )
-    
-    df_gold.info()
 
     # sort columns
     df_gold = df_gold[['id', 'issue_type', 'priority', 'analista_nome', 'created_at', 'resolved_at', 'resolution_hours', 'sla_expected_hours', 'is_sla_met']]
 
-    df_gold.info()
-
     # rename columns
     df_gold = df_gold.rename(columns={'id': 'issue_id', 'analista_nome': 'assignee_name'})
 
-    df_gold.info()
-    
+
+    ############################
+    # expected output files
+    ############################
+
+    ############################
+    # table
+
     # Exemplo de salvamento na camada gold local
     output_path = os.path.join("data", "gold", "gold_sla_issues.csv")
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
     # 4. Salvar Tabela Final
-    df_gold.to_csv(output_path, index=False)
+    df_gold.to_csv(output_path, index=False, sep=';', encoding='utf-8-sig')
 
-    return df_gold
+    ############################
+    # report 1
+
+    # 1. SLA Médio por Analista
+    df_sla_by_analyst = df_gold.groupby('assignee_name').agg(
+        issue_quantity=('issue_id', 'count'),
+        sla_mean_hours=('resolution_hours', 'mean')
+    ).reset_index().round({'sla_mean_hours': 2})
+
+    # Exemplo de salvamento na camada gold local
+    output_path = os.path.join("data", "gold", "gold_sla_by_analyst.csv")
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    # 4. Salvar Tabela Final
+    df_sla_by_analyst.to_csv(output_path, index=False, sep=';', encoding='utf-8-sig')
+
+    ############################
+    # report 2
+
+    # 2. SLA Médio por Tipo de Chamado
+    df_sla_by_issue_type = df_gold.groupby('issue_type').agg(
+        issue_quantity=('issue_id', 'count'),
+        sla_mean_hours=('resolution_hours', 'mean')
+    ).reset_index().round({'sla_mean_hours': 2})
+
+    # Exemplo de salvamento na camada gold local
+    output_path = os.path.join("data", "gold", "gold_sla_by_issue_type.csv")
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    # 4. Salvar Tabela Final
+    df_sla_by_issue_type.to_csv(output_path, index=False, sep=';', encoding='utf-8-sig')
