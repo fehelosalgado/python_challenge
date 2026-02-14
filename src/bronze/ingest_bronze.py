@@ -39,15 +39,13 @@ def download_jira_data():
         data = download_stream.readall()
         
         # Exemplo de salvamento na camada bronze local
-        output_path = os.path.join("data", "bronze", blob_name)
+        output_path = os.path.join("data", "bronze", "bronze_issues.json")
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         
         with open(output_path, "wb") as file:
             file.write(data)
             
         print(f"Sucesso! Arquivo salvo em: {output_path}")
-
-        return blob_name
 
     except Exception as e:
         print(f"Erro na conexão ou download: {e}")
