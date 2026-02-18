@@ -1,6 +1,16 @@
-# bibliiotecas utilizadas para conexão com o blob para baixar o arquivo json de dados do Jira
-python-dotenv
-azure-identity
-azure-storage-blob
+# Manipulação de Dados e Cálculos
 pandas
+numpy
+
+# Integração com Azure (Camada Bronze)
+azure-storage-blob
+azure-identity
+
+# Conexão com API de Feriados (Camada Gold)
+requests
+
+# Gerenciamento de Variáveis de Ambiente (.env)
+python-dotenv
+
+# Engine para leitura e escrita de arquivos Parquet (Camada Silver)
 pyarrow
