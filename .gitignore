@@ -1,12 +1,23 @@
-# secrets
+# Ambientes Virtuais (VENV)
+venv/
+.venv/
+env/
+
+# Variáveis de Ambiente e Credenciais (SENSÍVEL!)
 .env
 
-# data file
-bronze_issues.json
-silver_issues.parquet
-gold_sla_issues.csv
-gold_sla_by_analyst.csv
-gold_sla_by_issue_type.csv
+# Dados Locais (Arquivos grandes e processados)
+data/
 
-# Byte-compiled / optimized / DLL files
+# Cache do Python
 __pycache__/
+*.pyc
+.pytest_cache/
+
+# Configurações de Editores
+.vscode/
+.idea/
+
+# Sistema Operacional
+.DS_Store
+Thumbs.db
