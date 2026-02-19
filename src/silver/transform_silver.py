@@ -4,74 +4,74 @@ import os
 
 def process_bronze_to_silver():
     """
-    Realiza a limpeza, normalização e tipagem dos dados da camada Bronze para a Silver.
+    Cleans, normalizes, and types data from the Bronze layer to the Silver layer.
 
-    A função lê o arquivo JSON bruto, extrai a lista de chamados ('issues') e achata 
-    estruturas aninhadas (analista e datas). Realiza a conversão de tipos para 
-    datetime, remove registros inconsistentes e exporta o resultado no formato 
-    colunar Parquet para otimizar o armazenamento e performance.
+    The function reads the raw JSON file, extracts the 'issues' list, and flattens 
+    nested structures (analyst and dates). It performs type conversion to 
+    datetime, removes inconsistent records, and exports the result in 
+    columnar Parquet format to optimize storage and performance.
 
     Args:
-        Não recebe argumentos diretos. Depende da existência do arquivo:
+        Does not receive direct arguments. Relies on the existence of the file:
         - 'data/bronze/bronze_issues.json'
 
     Returns:
-        pd.DataFrame: DataFrame processado contendo o layout final com as colunas 
-            selecionadas (issue_id, issue_type, status, priority, analyst, 
+        pd.DataFrame: Processed DataFrame containing the final layout with 
+            selected columns (issue_id, issue_type, status, priority, analyst, 
             created_at, resolved_at).
     """
 
-    print("Iniciando processamento da camada silver...")
+    print("Starting silver layer processing...")
 
-    # caminho do arquivo fonte
+    # Source file path
     path_input = os.path.join("data", "bronze", "bronze_issues.json")
 
-    # leitura do arquivo fonte
+    # Read the source file
     with open(path_input, 'r', encoding='utf-8') as f:
         data_source = json.load(f)
 
-    # gera um data frame da lista 'issues' dentro do json
+    # Generate a dataframe from the 'issues' list within the JSON
     df = pd.json_normalize(
         data=data_source, 
         record_path=['issues']
     )
 
-    # cria novas colunas no df
-    # dentro do primeiro elemento da lista 'assignee', pega o nome do analista
+    # Create new columns in the dataframe
+    # Extracts the analyst name from the first element of the 'assignee' list
     df['analyst'] = df['assignee'].str[0].str.get('name')    
-    # dentro do primeiro elemento da lista 'timestamps', pega a data de criação do chamado
+    # Extracts the ticket creation date from the first element of the 'timestamps' list
     df['created_at'] = df['timestamps'].str[0].str.get('created_at')    
-    # dentro do primeiro elemento da lista 'timestamps', pega a data de fechamento do chamado
+    # Extracts the ticket resolution date from the first element of the 'timestamps' list
     df['resolved_at'] = df['timestamps'].str[0].str.get('resolved_at')
 
-    # conversão de str para datetime: qualquer valor que não seja possível de converter para datetime, será configurado como NaT (coerce)
+    # Conversion from str to datetime: any non-convertible value will be set as NaT (coerce)
     df['created_at'] = pd.to_datetime(df['created_at'], errors='coerce')
     df['resolved_at'] = pd.to_datetime(df['resolved_at'], errors='coerce')
 
-    # deleta chamados com datas de criação ausentes
+    # Remove tickets with missing creation dates
     df = df.dropna(subset=['created_at'])
 
-    # selecionando colunas desejadas para o layout final
+    # Selecting desired columns for the final layout
     columns_to_keep = [
         'id', 'issue_type', 'status', 'priority', 'analyst', 'created_at', 'resolved_at'
     ]
 
-    # renomeia colunas
+    # Rename columns mapping
     columns_rename = {
         'id': 'issue_id'
     }
 
-    # executa layout final e rename das colunas
+    # Rename columns mapping
     df_silver = df[columns_to_keep].rename(columns=columns_rename)
 
-    # caminho do arquivo destino
+    # Destination file path
     output_path = os.path.join("data", "silver", "silver_issues.parquet")
 
-    # grava localmente o data frame em formato parquet
+    # Save the dataframe locally in Parquet format
     df_silver.to_parquet(output_path, index=False)
     
-    print(f"    Arquivo salvo em: {output_path}")
-    print("Camada silver finalizada com sucesso!")
+    print(f"    File saved at: {output_path}")
+    print("Silver layer successfully finished.")
 
-    # retorna o data frame final
+    # Return the final dataframe
     return df_silver
