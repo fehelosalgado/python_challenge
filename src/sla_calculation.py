@@ -1,103 +1,104 @@
-'''
-Script com as funções necessárias para implementar a lógica de cálculo de SLA
-'''
+"""
+Script containing the necessary functions to implement SLA calculation logic.
+"""
 import pandas as pd
 import requests
 
 def get_holidays(year_list):
     """
-    Busca feriados nacionais brasileiros via API pública para múltiplos anos.
+    Fetches Brazilian national holidays via public API for multiple years.
 
     Args:
-        year_list (list[int]): Lista de anos (ex: [2023, 2024]) para os quais 
-            deseja-se obter os feriados.
+        year_list (list[int]): List of years (e.g., [2023, 2024]) for which 
+            holidays should be retrieved.
 
     Returns:
-        list[str]: Uma lista de strings contendo as datas dos feriados 
-            no formato 'YYYY-MM-DD'.
+        list[str]: A list of strings containing holiday dates in 
+            'YYYY-MM-DD' format.
     """
 
-    # lista para receber todos feriados
+    # List to store all holidays
     all_holidays = []
 
-    # para cada ano da lista fornecida (year_list)
+    # For each year in the provided list (year_list)
     for year in year_list:
-        # pegue o status da requisição
+        # Get request status
         response = requests.get(f"https://brasilapi.com.br/api/feriados/v1/{year}")
-        # se status = 200 (OK), continue
+        # If status = 200 (OK), proceed
         if response.status_code == 200:
-            # monte uma lista com o valor de date de cada elemento da lista retornada pela requisição
+            # Build a list with the 'date' value from each element returned by the request
             holidays = [f['date'] for f in response.json()]
-            # adicione a lista de feriados de cada ano na lista base (all_holidays)
+            # Add each year's holiday list to the base list (all_holidays)
             all_holidays.extend(holidays)
-    # retorna a lista de todos os feriados
+    # Returns the list of all holidays
     return all_holidays
 
 def calculate_working_hours(start_date, end_date, holidays_issues):    
     """
-    Calcula a diferença em horas entre duas datas considerando apenas dias úteis e feriados.
+    Calculates the difference in hours between two dates considering only business days and holidays.
 
-    A função desconsidera fins de semana e os feriados fornecidos. O cálculo baseia-se
-    em dias úteis de 24 horas. Se as datas estiverem no mesmo dia, calcula a diferença direta.
-    Para períodos maiores, soma as horas proporcionais do primeiro e último dia aos dias 
-    intermediários completos.
+    The function ignores weekends and the provided holidays. The calculation is based 
+    on 24-hour business days. If dates are on the same day, it calculates the direct difference.
+    For longer periods, it adds proportional hours from the first and last day to the 
+    full intermediate days.
 
     Args:
-        start_date (pd.Timestamp): Data e hora de início (abertura do chamado).
-        end_date (pd.Timestamp): Data e hora de fim (resolução do chamado).
-        holidays_issues (list[str]): Lista de datas de feriados no formato 'YYYY-MM-DD'.
+        start_date (pd.Timestamp): Start date and time (ticket opening).
+        end_date (pd.Timestamp): End date and time (ticket resolution).
+        holidays_issues (list[str]): List of holiday dates in 'YYYY-MM-DD' format.
 
     Returns:
-        int: Total de horas úteis arredondado para o inteiro mais próximo ou None se alguma das datas for nula.
+        int: Total working hours rounded to the nearest integer, or None if any date is null.
     """
 
-    # retorna None se alguma das datas for nula
+    # Returns None if any of the dates are null
     if pd.isna(start_date) or pd.isna(end_date):
         return None
 
-    # retorna uma lista de datas entre data de abertura e data de fechamento - dias úteis -, desconsiderando sábado, domingo e 
-    # os feriados fornecidos
+    # Returns a list of dates between opening and closing dates - business days -, 
+    # ignoring Saturdays, Sundays, and provided holidays
     days = pd.bdate_range(start=start_date, end=end_date, freq='C', holidays=holidays_issues)
 
-    # se abriu e fechou no mesmo dia útil
+    # If opened and closed on the same business day
     if len(days) <= 1:
-        # diferença entre hora inicial e final
+        # Difference between start and end time
         diff = end_date - start_date
-        # converta a diferença em segundos (total_seconds()), depois em horas (1h tem 3600s) e garanta que resultado não seja 
-        # negativo (caso hora final seja anterior a hora inicial)
+        # Convert difference to seconds (total_seconds()), then to hours (1h = 3600s) 
+        # and ensure result is not negative (in case end time is before start time)
         return max(0, diff.total_seconds() / 3600)
 
-    # Cálculo: (Horas do 1º dia) + (Dias intermediários * 24h) + (Horas do último dia)
+    # Calculation: (1st day hours) + (Intermediate days * 24h) + (Last day hours)
 
-    # quantidade de horas dos dias intermediários, desconsiderando os dias de abertura e de encerramento do chamado (-2)
-    # consideramos 24h úteis por dia de semana
+    # Amount of hours for intermediate days, excluding opening and closing days (-2)
+    # We consider 24 working hours per weekday
     total_hours = (len(days) - 2) * 24
 
-    # quantidade de horas do dia de abertura, até meia-noite
+    # Amount of hours for the opening day, until midnight
     first_day_end = start_date.replace(hour=23, minute=59, second=59)
     total_hours += (first_day_end - start_date).total_seconds() / 3600
 
-    # quantidade de horas do dia de encerramento, desde a meia-noite
+    # Amount of hours for the closing day, since midnight
     last_day_start = end_date.replace(hour=0, minute=0, second=0)
     total_hours += (end_date - last_day_start).total_seconds() / 3600
 
-    # retorna total de horas úteis
+    # Returns total working hours
     return int(round(total_hours, 0))
 
 def define_expected_sla(priority):
     """
-    Retorna o SLA em horas conforme a regra de negócio baseada na prioridade.
+    Returns the SLA in hours according to the business rule based on priority.
 
-    A função utiliza um mapeamento fixo onde cada nível de prioridade (High, Medium, Low)
-    possui um limite de horas definido para a resolução do chamado. Caso a prioridade 
-    não seja encontrada no mapeamento, a função retorna None.
+    The function uses a fixed mapping where each priority level (High, Medium, Low)
+    has a defined hour limit for ticket resolution. If the priority is 
+    not found in the mapping, the function returns None.
 
     Args:
-        priority (str): O nível de prioridade do chamado (ex: 'High', 'Medium', 'Low').
+        priority (str): The ticket priority level (e.g., 'High', 'Medium', 'Low').
 
     Returns:
-        int: O limite de horas de SLA correspondente ou None se a prioridade for inválida.
+        int: Corresponding SLA hour limit or None if priority is invalid.
     """
+
     regras = {
         'High': 24,
         'Medium': 72,
@@ -107,19 +108,19 @@ def define_expected_sla(priority):
 
 def verify_sla_status(spent_hours, expected_hours):
     """
-    Indica se o SLA foi atendido ou violado comparando as horas gastas com o limite esperado.
+    Indicates whether the SLA was met or violated by comparing spent hours with the expected limit.
 
-    A função realiza uma comparação lógica simples: se as horas reais gastas forem menores 
-    ou iguais ao limite definido para aquela prioridade, o SLA é considerado 'Atendido' 
-    (True). Caso contrário, é considerado 'Violado' (False).
+    The function performs a simple logical comparison: if the actual hours spent are less 
+    than or equal to the limit defined for that priority, the SLA is considered 'Met' 
+    (True). Otherwise, it is considered 'Violated' (False).
 
     Args:
-        spent_hours (float | int): O total de horas úteis calculadas para a resolução.
-        expected_hours (int): O limite de horas de SLA esperado para o chamado.
+        spent_hours (float | int): Total working hours calculated for resolution.
+        expected_hours (int): Expected SLA hour limit for the ticket.
 
     Returns:
-        bool: True se o SLA foi cumprido, False se foi estourado. 
-            Retorna None se o valor de spent_hours for nulo.
+        bool: True if SLA was met, False if breached. 
+            Returns None if spent_hours value is null.
     """
 
     if spent_hours is None:
