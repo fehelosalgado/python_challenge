@@ -5,58 +5,58 @@ from src.sla_calculation import get_holidays, calculate_working_hours, define_ex
 
 def process_silver_to_gold(df_silver):
     """
-    Transforma os dados da camada Silver em indicadores de negócio na camada Gold.
+    Transforms Silver layer data into business indicators in the Gold layer.
 
-    A função filtra apenas chamados finalizados, identifica os anos envolvidos para 
-    buscar feriados nacionais via API e calcula o SLA real em horas úteis. Além disso, 
-    atribui o SLA esperado por prioridade e verifica o cumprimento da meta. Ao final, 
-    gera e exporta três arquivos CSV: a base detalhada por chamado e dois relatórios 
-    agregados (por analista e por tipo de chamado).
+    The function filters only finished tickets, identifies the involved years to 
+    fetch national holidays via API, and calculates the actual SLA in working hours. 
+    Additionally, it assigns the expected SLA by priority and verifies goal compliance. 
+    Finally, it generates and exports three CSV files: the detailed ticket-by-ticket 
+    base and two aggregated reports (by analyst and by issue type).
 
     Args:
-        df_silver (pd.DataFrame): DataFrame proveniente da camada Silver, já limpo 
-            e com as colunas de data devidamente tipadas.
+        df_silver (pd.DataFrame): DataFrame from the Silver layer, already cleaned 
+            and with date columns properly typed.
 
     Returns:
-        A função realiza o salvamento físico de múltiplos arquivos CSV no 
-            diretório 'data/gold' e exibe os resultados através de arquivos locais.
+        None: The function performs physical saving of multiple CSV files in the 
+            'data/gold' directory and outputs results through local files.
     """
     
-    print("Iniciando processamento da camada gold...")
+    print("Starting gold layer processing...")
 
-    # cria um novo data frame (.copy()), filtrando apenas chamados finalizados (Done ou Resolved)
+    # Creates a new dataframe (.copy()), filtering only finished tickets (Done or Resolved)
     df_gold = df_silver[df_silver['status'].isin(['Done', 'Resolved'])].copy()
 
-    # criação da lista com feriados
-    # lista dos anos distintos do campo created_at
+    # Holiday list creation
+    # List of distinct years from the 'created_at' field
     year_created_at = df_gold['created_at'].dt.year.dropna().astype(int).unique()
-    # lista dos anos distintos do campo resolved_at
+    # List of distinct years from the 'resolved_at' field
     year_resolved_at = df_gold['resolved_at'].dt.year.dropna().astype(int).unique()
-    # junta todos os anos distintos, combinando as 2 listas acima
+    # Joins all distinct years, combining the two lists above
     year_list = np.union1d(year_created_at, year_resolved_at)
     
-    print("    Buscando feriados...")
-    # lista com os feriados
+    print("    Fetching holidays...")
+    # Holiday list
     holidays = get_holidays(year_list)
 
-    print("    Calculando tempo de resolução em horas úteis...")
-    # cria novas colunas no df_gold
-    # tempo de resolução em horas úteis
+    print("    Calculating resolution time in working hours...")
+    # Create new columns in df_gold
+    # Resolution time in working hours
     df_gold['resolution_hours'] = df_gold.apply(
         lambda row: calculate_working_hours(row['created_at'], row['resolved_at'], holidays), axis=1
     ).astype('Int64')
 
-    print("    Calculando SLA esperado (em horas)...")
-    # SLA esperado (em horas)
+    print("    Calculating expected SLA (in hours)...")
+    # Expected SLA (in hours)
     df_gold['sla_expected_hours'] = df_gold['priority'].apply(define_expected_sla)
 
-    print("    Calculando indicador de SLA atendido ou não atendido...")
-    # indicador de SLA atendido ou não atendido
+    print("    Calculating SLA met vs breached indicator...")
+    # SLA met or breached indicator
     df_gold['is_sla_met'] = df_gold.apply(
         lambda row: verify_sla_status(row['resolution_hours'], row['sla_expected_hours']), axis=1
     )
 
-    # reordena colunas do dataframe final
+    # Reorder final dataframe columns
     df_gold = df_gold[['issue_id', 'issue_type', 'priority', 'analyst', 'created_at', 'resolved_at', 'resolution_hours', 'sla_expected_hours', 'is_sla_met']]
 
     ############################
@@ -64,48 +64,48 @@ def process_silver_to_gold(df_silver):
     ############################
 
     ############################
-    # output 1: Tabela Final – SLA por Chamado
-    print("    Gerando output 1: Tabela Final – SLA por Chamado...")
+    # output 1: Final Table – SLA per Ticket
+    print("    Generating output 1: Final Table – SLA per Ticket...")
 
-    # caminho do arquivo destino
+    # Destination file path
     output_path = os.path.join("data", "gold", "gold_sla_issues.csv")
 
-    # grava localmente o data frame em formato csv
+    # Saves the dataframe locally in CSV format
     df_gold.to_csv(output_path, index=False, sep=';', encoding='utf-8-sig')
-    print(f"    Arquivo salvo em: {output_path}")
+    print(f"    File saved at: {output_path}")
 
     ############################
-    # output 2: SLA Médio por Analista
-    print("    Gerando output 2: SLA Médio por Analista...")
+    # output 2: Average SLA per Analyst
+    print("    Generating output 2: Average SLA per Analyst...")
 
-    # agrupamento com Quantidade de chamados e SLA médio (em horas) por analista
+    # Aggregation: Ticket count and average SLA (in hours) per analyst
     df_sla_by_analyst = df_gold.groupby('analyst').agg(
         issue_quantity=('issue_id', 'count'),
         sla_mean_hours=('resolution_hours', 'mean')
     ).reset_index().round({'sla_mean_hours': 2})
 
-    # caminho do arquivo destino
+    # Destination file path
     output_path = os.path.join("data", "gold", "gold_sla_by_analyst.csv")
 
-    # grava localmente o data frame em formato csv
+    # Saves the dataframe locally in CSV format
     df_sla_by_analyst.to_csv(output_path, index=False, sep=';', encoding='utf-8-sig')
-    print(f"    Arquivo salvo em: {output_path}")
+    print(f"    File saved at: {output_path}")
 
     ############################
-    # output 3: SLA Médio por Tipo de Chamado
-    print("    Gerando output 3: SLA Médio por Tipo de Chamado...")
+    # output 3: Average SLA per Issue Type
+    print("    Generating output 3: Average SLA per Issue Type...")
 
-    # agrupamento com Quantidade de chamados e SLA médio (em horas) por tipo de chamado
+    # Aggregation: Ticket count and average SLA (in hours) per issue type
     df_sla_by_issue_type = df_gold.groupby('issue_type').agg(
         issue_quantity=('issue_id', 'count'),
         sla_mean_hours=('resolution_hours', 'mean')
     ).reset_index().round({'sla_mean_hours': 2})
 
-    # caminho do arquivo destino
+    # Destination file path
     output_path = os.path.join("data", "gold", "gold_sla_by_issue_type.csv")
 
-    # grava localmente o data frame em formato csv
+    # Saves the dataframe locally in CSV format
     df_sla_by_issue_type.to_csv(output_path, index=False, sep=';', encoding='utf-8-sig')
-    print(f"    Arquivo salvo em: {output_path}")
+    print(f"    File saved at: {output_path}")
 
-    print("Camada gold finalizada com sucesso!")
+    print("Gold layer successfully finished.")
