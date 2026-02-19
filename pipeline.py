@@ -1,28 +1,33 @@
-# import
+"""
+Orquestrador do Pipeline de Dados Jira: Bronze -> Silver -> Gold.
+
+Este script centraliza a execução de todas as etapas do processo de ETL:
+1. Bronze: Realiza o download dos dados brutos do Azure Blob Storage.
+2. Silver: Limpa, normaliza e converte os tipos de dados do arquivo JSON.
+3. Gold: Aplica regras de negócio (SLA), busca feriados e gera relatórios finais.
+
+O pipeline depende de um arquivo .env configurado com as credenciais do Azure
+e conexão com a internet para consulta à API de feriados.
+"""
+
 from src.bronze.ingest_bronze import download_jira_data
 from src.silver.transform_silver import process_bronze_to_silver
 from src.gold.build_gold import process_silver_to_gold
 
 ###########################################
-# camada bronze
+# execução da camada bronze
 ###########################################
 
-# baixa o arquivo json do blob para a camada bronze (traduzir para o ingles)
-blob_name = download_jira_data()
+download_jira_data()
 
 ###########################################
-# camada silver
+# execução da camada silver
 ###########################################
 
-# cria camada silver
-df_silver = process_bronze_to_silver("bronze_issues.json")
+df_silver = process_bronze_to_silver()
 
 ###########################################
-# camada gold
+# execução da camada gold
 ###########################################
 
-# le parquet silver
-#df_silver = pd.read_parquet(os.path.join("data", "silver", "silver_issues.parquet"))
-
-df_gold = process_silver_to_gold(df_silver)
-
+process_silver_to_gold(df_silver)
