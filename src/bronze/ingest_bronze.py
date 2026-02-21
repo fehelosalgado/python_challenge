@@ -65,6 +65,8 @@ def download_jira_data():
     
     # Local file path to receive the cloud file content
     output_path = os.path.join("data", "bronze", "bronze_issues.json")
+    # If it doesn't exist, create the directory where the file will be saved
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
     
     # Write the cloud file binary into the local physical file
     with open(output_path, "wb") as file:

@@ -66,6 +66,8 @@ def process_bronze_to_silver():
 
     # Destination file path
     output_path = os.path.join("data", "silver", "silver_issues.parquet")
+    # If it doesn't exist, create the directory where the file will be saved
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
     # Save the dataframe locally in Parquet format
     df_silver.to_parquet(output_path, index=False)

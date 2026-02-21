@@ -69,6 +69,8 @@ def process_silver_to_gold(df_silver):
 
     # Destination file path
     output_path = os.path.join("data", "gold", "gold_sla_issues.csv")
+    # If it doesn't exist, create the directory where the file will be saved
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
     # Saves the dataframe locally in CSV format
     df_gold.to_csv(output_path, index=False, sep=';', encoding='utf-8-sig')
@@ -86,7 +88,9 @@ def process_silver_to_gold(df_silver):
 
     # Destination file path
     output_path = os.path.join("data", "gold", "gold_sla_by_analyst.csv")
-
+    # If it doesn't exist, create the directory where the file will be saved
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    
     # Saves the dataframe locally in CSV format
     df_sla_by_analyst.to_csv(output_path, index=False, sep=';', encoding='utf-8-sig')
     print(f"    File saved at: {output_path}")
@@ -103,6 +107,8 @@ def process_silver_to_gold(df_silver):
 
     # Destination file path
     output_path = os.path.join("data", "gold", "gold_sla_by_issue_type.csv")
+    # If it doesn't exist, create the directory where the file will be saved
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
     # Saves the dataframe locally in CSV format
     df_sla_by_issue_type.to_csv(output_path, index=False, sep=';', encoding='utf-8-sig')
