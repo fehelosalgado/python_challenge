@@ -1,23 +1,23 @@
-# Ambientes Virtuais (VENV)
+# Virtual Environments (VENV)
 venv/
 .venv/
 env/
 
-# Variáveis de Ambiente e Credenciais (SENSÍVEL!)
+# Environment Variables and Credentials
 .env
 
-# Dados Locais (Arquivos grandes e processados)
+# Local Data
 data/
 
-# Cache do Python
+# Python Cache and Temporary Compilation Files
 __pycache__/
 *.pyc
 .pytest_cache/
 
-# Configurações de Editores
+# IDE and Editor Configurations
 .vscode/
 .idea/
 
-# Sistema Operacional
+# OS-Specific Temporary Files (macOS and Windows)
 .DS_Store
 Thumbs.db
