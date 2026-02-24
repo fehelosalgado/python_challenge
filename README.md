@@ -25,7 +25,7 @@ Todos os comandos abaixo foram digitados no prompt do Git Bash (https://git-scm.
 
 		- digite o seguinte comando para desativar o ambiente virtual: `deactivate`
 
-Visualize os 3 relatórios gerados no seguinte caminho: ...\python_project\data\gold.
+Visualize os 3 relatórios gerados no seguinte caminho: ...\python_challenge\data\gold.
 
 ---
 
