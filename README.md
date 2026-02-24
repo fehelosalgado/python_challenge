@@ -1,6 +1,34 @@
 
 ---
 
+## Instruções para execução do projeto
+
+Todos os comandos abaixo foram digitados no prompt do Git Bash (https://git-scm.com/install/windows).
+
+- **Clonando o repo online para a máquina local:** entre na pasta onde será clonado o repo online, clique com botão direito do mouse e selecione "Open Git Bash here" (para abrir o Git Bash). Execute no Git Bash o comando: `git clone https://github.com/fehelosalgado/python_challenge.git`
+
+- **Configurando as chaves para acessar a nuvem Azure e baixar o arquivo .json com os chamados do Jera:** entre na pasta (python_challenge) do projeto clonado, crie um arquivo .env contendo as mesmas chaves do arquivo .env.example (dentro desse mesmo dir), insira os valores (vide recursos.md) para cada chave e salve o arquivo.
+	
+- **Executando o pipeline principal do projeto dentro de um ambiente virtual:**
+
+	- volte ao Git Bash e digite o seguinte comando para entrar na pasta do projeto: `cd python_challenge`
+	
+	- ainda no Git Bash:
+
+		- digite o seguinte comando para criar a pasta do ambiente virtual: `python -m venv .venv`
+		
+		- digite o seguinte comando para ativar o ambiente virtual: `source .venv/Scripts/activate`
+		
+		- digite o seguinte comando para instalar as bibliotecas necessárias para execução do pipeline do projeto: `pip install -r requirements.txt`
+	
+		- digite o seguinte comando para executar o projeto: `python pipeline.py`
+
+		- digite o seguinte comando para desativar o ambiente virtual: `deactivate`
+
+Visualize os 3 relatórios gerados no seguinte caminho: ...\python_project\data\gold.
+
+---
+
 ## Arquitetura do pipeline
 
 A estrutura segue a Arquitetura Medalhão (Medallion Architecture), que é o padrão da indústria para organizar e transformar dados à medida que avançam pelas etapas bronze, silver e gold.
